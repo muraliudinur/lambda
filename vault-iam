@@ -1,0 +1,157 @@
+To connect to HashiCorp Vault Enterprise using AWS IAM roles, you can leverage the AWS IAM authentication method provided by Vault. This allows Vault to authenticate AWS IAM roles and map them to Vault policies. Here are the steps to achieve this:
+
+Step 1: Configure Vault for AWS IAM Authentication
+Enable the AWS Auth Method:
+
+Enable the AWS auth method on your Vault server:
+bash
+Copy code
+vault auth enable aws
+Configure AWS Auth Method:
+
+Configure Vault to trust the AWS account and IAM roles that will authenticate to Vault:
+bash
+Copy code
+vault write auth/aws/config/client \
+    access_key="YOUR_AWS_ACCESS_KEY_ID" \
+    secret_key="YOUR_AWS_SECRET_ACCESS_KEY"
+Note: It's a best practice to use an IAM role with the necessary permissions instead of hardcoding access keys.
+
+Create a Role in Vault:
+
+Create a Vault role that maps to the IAM role:
+bash
+Copy code
+vault write auth/aws/role/my-role \
+    auth_type=iam \
+    bound_iam_principal_arn=arn:aws:iam::AWS_ACCOUNT_ID:role/ROLE_NAME \
+    policies=my-policy \
+    max_ttl=5000
+Replace AWS_ACCOUNT_ID with your AWS account ID and ROLE_NAME with the IAM role name. The policies parameter should reference the Vault policies you want to assign to the authenticated IAM role.
+
+Step 2: Configure IAM Role in AWS
+Create an IAM Role:
+
+Create an IAM role that your Lambda function or other AWS resources will assume.
+Attach Policies to IAM Role:
+
+Attach the necessary policies to the IAM role to allow it to assume the role and perform actions on AWS services.
+Step 3: Create a Lambda Function to Authenticate and Access Vault
+Set Up the Lambda Function:
+
+Open the AWS Lambda console and create a new function.
+Add Necessary IAM Permissions:
+
+Attach a policy to the Lambda execution role to allow it to assume the IAM role and access Vault.
+Install Required Python Packages:
+
+If you are using Python, you need to install hvac (HashiCorp Vault API client) and boto3 (AWS SDK for Python). You can include these packages in your deployment package or use a Lambda layer.
+Lambda Function Code:
+
+Use the following Python code in your Lambda function to authenticate with Vault using the IAM role and retrieve secrets
+Here's the Python code for the Lambda function to authenticate with Vault using the IAM role and retrieve secrets:
+
+python
+Copy code
+import os
+import json
+import boto3
+import requests
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+
+# Initialize AWS clients
+sts_client = boto3.client('sts')
+
+# Vault configuration from environment variables
+VAULT_URL = os.environ['VAULT_URL']
+VAULT_ROLE = os.environ['VAULT_ROLE']
+VAULT_PATH = os.environ['VAULT_PATH']
+
+def lambda_handler(event, context):
+    try:
+        # Get the caller identity
+        identity = sts_client.get_caller_identity()
+        account_id = identity['Account']
+        role_name = context.invoked_function_arn.split(':')[-1]
+
+        # Assume the IAM role
+        response = sts_client.assume_role(
+            RoleArn=f"arn:aws:iam::{account_id}:role/{role_name}",
+            RoleSessionName='VaultSession'
+        )
+
+        credentials = response['Credentials']
+        access_key = credentials['AccessKeyId']
+        secret_key = credentials['SecretAccessKey']
+        session_token = credentials['SessionToken']
+
+        # Generate the Vault login payload
+        vault_login_payload = {
+            'role': VAULT_ROLE,
+            'iam_http_request_method': 'POST',
+            'iam_request_url': boto3.utils.base64.b64encode(requests.Request('POST', sts_client.meta.endpoint_url + '/').prepare().url.encode('utf-8')).decode('utf-8'),
+            'iam_request_body': boto3.utils.base64.b64encode(json.dumps({
+                'Action': 'GetCallerIdentity',
+                'Version': '2011-06-15'
+            }).encode('utf-8')).decode('utf-8'),
+            'iam_request_headers': boto3.utils.base64.b64encode(json.dumps({
+                'Authorization': response['ResponseMetadata']['HTTPHeaders']['authorization'],
+                'X-Amz-Date': response['ResponseMetadata']['HTTPHeaders']['x-amz-date'],
+                'x-amz-security-token': session_token
+            }).encode('utf-8')).decode('utf-8')
+        }
+
+        # Authenticate to Vault
+        vault_auth_url = f"{VAULT_URL}/v1/auth/aws/login"
+        vault_auth_response = requests.post(vault_auth_url, json=vault_login_payload)
+
+        if vault_auth_response.status_code != 200:
+            raise Exception(f"Vault authentication failed: {vault_auth_response.text}")
+
+        vault_token = vault_auth_response.json()['auth']['client_token']
+
+        # Access the secret from Vault
+        vault_secret_url = f"{VAULT_URL}/v1/{VAULT_PATH}"
+        vault_headers = {'X-Vault-Token': vault_token}
+        vault_secret_response = requests.get(vault_secret_url, headers=vault_headers)
+
+        if vault_secret_response.status_code != 200:
+            raise Exception(f"Failed to retrieve secret from Vault: {vault_secret_response.text}")
+
+        secret_data = vault_secret_response.json()['data']
+        print(f"Retrieved secret: {secret_data}")
+
+    except (NoCredentialsError, PartialCredentialsError) as e:
+        print(f"Credential error: {e}")
+    except Exception as e:
+        print(f"Error: {e}")
+        raise e
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Secret retrieved successfully')
+    }
+Configuration
+Environment Variables:
+
+Set the following environment variables for the Lambda function:
+VAULT_URL: The URL of your Vault server.
+VAULT_ROLE: The Vault role configured for the AWS IAM authentication method.
+VAULT_PATH: The path in Vault where the secrets are stored.
+IAM Role Permissions:
+
+Ensure that the Lambda execution role has the necessary permissions to assume the IAM role and perform sts:AssumeRole and sts:GetCallerIdentity.
+Vault Policy:
+
+Ensure that the Vault policy associated with the Vault role has the necessary permissions to read the secrets from the specified path.
+Testing
+Deploy the Lambda Function:
+
+Deploy the Lambda function with the provided code and set the required environment variables.
+Invoke the Lambda Function:
+
+Invoke the Lambda function and check the logs for successful authentication and secret retrieval.
+Verify Vault Access:
+
+Verify that the Lambda function successfully retrieves the secrets from Vault and handles any errors appropriately.
+By following these steps, you can securely authenticate with Vault using AWS IAM roles and manage secrets efficiently across your AWS and Vault environments
