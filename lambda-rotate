@@ -1,0 +1,143 @@
+Rotating secrets in AWS Secrets Manager using an AWS Lambda function involves creating a Lambda function that follows the AWS Secrets Manager rotation protocol. This protocol includes four steps: createSecret, setSecret, testSecret, and finishSecret. Here is a step-by-step guide to create a Lambda function for rotating secrets.
+
+Step-by-Step Guide
+1. Create IAM Role for Lambda
+First, create an IAM role for the Lambda function with necessary permissions.
+
+Create the IAM Role:
+Go to the IAM console and create a new role.
+Select "Lambda" as the use case.
+Attach the following policies: AWSLambdaBasicExecutionRole and SecretsManagerRotator.
+json
+Copy code
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:UpdateSecret",
+                "secretsmanager:ListSecretVersionIds",
+                "secretsmanager:PutSecretValue"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+Attach the IAM Role: Note down the role ARN, which will be used in the Lambda function creation.
+2. Create the Lambda Function
+Create a Lambda function to handle the rotation of the secrets.
+
+Create the Lambda Function:
+
+Go to the Lambda console and create a new function.
+Select "Author from scratch".
+Set a function name, and for the runtime, select "Python 3.x" or "Node.js 14.x".
+Choose the execution role created in the previous step.
+Function Code: Here is an example of a Python-based Lambda function for rotating secrets.
+
+python
+Copy code
+import json
+import boto3
+import logging
+import os
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+secrets_client = boto3.client('secretsmanager')
+
+def lambda_handler(event, context):
+    arn = event['SecretId']
+    token = event['ClientRequestToken']
+    step = event['Step']
+
+    metadata = secrets_client.describe_secret(SecretId=arn)
+    
+    if 'RotationEnabled' in metadata and not metadata['RotationEnabled']:
+        logger.error("Secret %s is not enabled for rotation" % arn)
+        raise ValueError("Secret %s is not enabled for rotation" % arn)
+    
+    versions = metadata['VersionIdsToStages']
+    if token not in versions:
+        logger.error("Secret version %s has no stage for rotation of secret %s." % (token, arn))
+        raise ValueError("Secret version %s has no stage for rotation of secret %s." % (token, arn))
+    
+    if "AWSCURRENT" in versions[token]:
+        logger.info("Secret version %s already set as AWSCURRENT for secret %s." % (token, arn))
+        return
+    
+    if step == "createSecret":
+        create_secret(arn, token)
+    elif step == "setSecret":
+        set_secret(arn, token)
+    elif step == "testSecret":
+        test_secret(arn, token)
+    elif step == "finishSecret":
+        finish_secret(arn, token)
+    else:
+        raise ValueError("Invalid step parameter")
+    
+def create_secret(arn, token):
+    try:
+        secrets_client.get_secret_value(SecretId=arn, VersionStage="AWSPENDING", VersionId=token)
+        logger.info("createSecret: Successfully retrieved secret for ARN %s and version %s" % (arn, token))
+    except secrets_client.exceptions.ResourceNotFoundException:
+        current_secret = secrets_client.get_secret_value(SecretId=arn, VersionStage="AWSCURRENT")
+        new_secret_string = rotate_secret(current_secret['SecretString'])
+        secrets_client.put_secret_value(SecretId=arn, ClientRequestToken=token, SecretString=new_secret_string, VersionStages=['AWSPENDING'])
+        logger.info("createSecret: Successfully put secret for ARN %s and version %s" % (arn, token))
+
+def set_secret(arn, token):
+    # Implement any additional steps to apply the secret to the target database or service here
+    logger.info("setSecret: Successfully set secret for ARN %s and version %s" % (arn, token))
+
+def test_secret(arn, token):
+    # Implement any testing steps to ensure the secret is correct
+    logger.info("testSecret: Successfully tested secret for ARN %s and version %s" % (arn, token))
+
+def finish_secret(arn, token):
+    metadata = secrets_client.describe_secret(SecretId=arn)
+    current_version = None
+    for version in metadata['VersionIdsToStages']:
+        if "AWSCURRENT" in metadata['VersionIdsToStages'][version]:
+            current_version = version
+            break
+
+    secrets_client.update_secret_version_stage(SecretId=arn, VersionStage="AWSCURRENT", MoveToVersionId=token, RemoveFromVersionId=current_version)
+    logger.info("finishSecret: Successfully finished secret rotation for ARN %s and version %s" % (arn, token))
+
+def rotate_secret(current_secret):
+    # Implement the logic to rotate the secret
+    new_secret = json.loads(current_secret)
+    new_secret['password'] = generate_new_password()
+    return json.dumps(new_secret)
+
+def generate_new_password():
+    # Implement your logic to generate a new password
+    return "new-secure-password-123"
+3. Add Environment Variables
+Add environment variables for sensitive information and configuration settings.
+
+Navigate to the "Configuration" tab of your Lambda function.
+Add environment variables if necessary.
+4. Create a Secrets Manager Rotation Schedule
+Configure AWS Secrets Manager to use your Lambda function for secret rotation.
+
+Navigate to Secrets Manager:
+
+Go to the Secrets Manager console.
+Select the secret you want to rotate.
+Choose "Edit rotation".
+Configure Rotation:
+
+Enable rotation and specify the rotation schedule (e.g., every 30 days).
+Select "Use a Lambda function".
+Choose the Lambda function you created for rotation.
+Save Changes.
+
+Conclusion
+By following these steps, you create an AWS Lambda function to rotate secrets managed by AWS Secrets Manager. The example provided is for a Python-based Lambda function, but you can adapt the logic to other languages supported by AWS Lambda, such as Node.js or Java. Ensure you customize the rotation logic (rotate_secret and generate_new_password) according to your specific requirements.
