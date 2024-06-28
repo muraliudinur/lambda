@@ -1,0 +1,1 @@
+grep -rl "error" /var/log | xargs -I {} sh -c 'echo "File: {}"; cat {}; echo'
