@@ -1,0 +1,51 @@
+import boto3
+import json
+import os
+from botocore.exceptions import ClientError
+
+# Initialize AWS clients
+secretsmanager_client = boto3.client('secretsmanager')
+lambda_client = boto3.client('lambda')
+
+# Environment variables
+SECRET_ID = os.environ['SECRET_ID']
+SECOND_LAMBDA_FUNCTION_NAME = os.environ['SECOND_LAMBDA_FUNCTION_NAME']
+
+def lambda_handler(event, context):
+    try:
+        # Step 1: Retrieve the current secret value
+        get_secret_value_response = secretsmanager_client.get_secret_value(SecretId=SECRET_ID)
+        secret_value = json.loads(get_secret_value_response['SecretString'])
+
+        # Step 2: Generate a new secret value (example: rotating password)
+        new_password = generate_new_password()
+
+        # Update the secret value
+        secret_value['password'] = new_password
+
+        # Step 3: Update the secret in Secrets Manager
+        update_secret_response = secretsmanager_client.update_secret(
+            SecretId=SECRET_ID,
+            SecretString=json.dumps(secret_value)
+        )
+        print(f'Secret updated: {update_secret_response}')
+
+        # Step 4: Invoke the second Lambda function
+        invoke_response = lambda_client.invoke(
+            FunctionName=SECOND_LAMBDA_FUNCTION_NAME,
+            InvocationType='Event',  # 'Event' for async, 'RequestResponse' for sync
+            Payload=json.dumps(event)
+        )
+        print(f'Second Lambda function invoked: {invoke_response}')
+    
+    except ClientError as e:
+        print(f'Error: {e}')
+        raise e
+
+def generate_new_password():
+    # Implement your password generation logic here
+    import string
+    import random
+    characters = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(random.choice(characters) for i in range(12))
+    return password
