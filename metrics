@@ -1,0 +1,45 @@
+Application Level Metrics
+Application Performance
+
+Request Latency: Time taken to respond to requests.
+Request Rate: Number of requests per second.
+Error Rate: Number of failed requests per second.
+Database Metrics (if applicable)
+
+Query Performance: Execution time of database queries.
+Connection Pool: Number of active database connections.
+Kubernetes Control Plane Metrics
+API Server Metrics
+
+Request Latency: Latency of API server requests.
+Request Rate: Number of requests handled by the API server.
+Error Rate: Rate of API server errors.
+Controller Manager Metrics
+
+Queue Length: Length of the controller work queues.
+Reconcile Time: Time taken to reconcile resources.
+Scheduler Metrics
+
+Scheduling Latency: Time taken to schedule pods.
+Scheduling Throughput: Number of pods scheduled per second.
+etcd Metrics
+
+Request Latency: Latency of requests to etcd.
+Database Size: Size of the etcd database.
+Leader Changes: Number of leader changes in the etcd cluster.
+Network Metrics
+Network Latency: Latency of network communication between pods.
+Packet Loss: Rate of packet loss in the network.
+Bandwidth Usage: Network bandwidth utilization.
+Security Metrics
+Unauthorized Access Attempts: Number of unauthorized access attempts.
+Policy Violations: Number of security policy violations.
+Certificate Expiration: Monitoring for certificate expiration.
+Storage Metrics
+Volume Usage: Utilization of persistent volumes.
+I/O Operations: I/O operation rate for storage volumes.
+Storage Latency: Latency of storage operations.
+Logging and Tracing
+Application Logs: Logs from applications running in the cluster.
+System Logs: Logs from the Kubernetes system components.
+Tracing: Distributed tracing for microservices.
