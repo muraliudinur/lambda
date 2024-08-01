@@ -1,0 +1,74 @@
+Control Plane Metrics
+Gloo Mesh Management Server
+
+API Server Metrics
+Request Latency: Latency of API server requests.
+Request Rate: Number of requests handled by the API server.
+Error Rate: Rate of API server errors.
+Configuration Metrics
+
+Configuration Pushes: Number and success rate of configuration pushes to data planes.
+Config Errors: Track configuration errors and rejections.
+Synchronization Status: Status of configuration synchronization across clusters.
+Data Plane Metrics
+Envoy Proxy Metrics
+
+Request Count: Total number of requests received and sent by the proxy.
+Request Duration: Duration of inbound and outbound requests.
+Request Size: Size of inbound and outbound requests.
+Response Size: Size of responses for inbound and outbound requests.
+Error Rate: Rate of HTTP errors (e.g., 4xx and 5xx status codes).
+Connection Metrics: Number of active connections and connection errors.
+Latency Metrics
+
+Request Latency: Latency of requests through the proxy (p50, p90, p99 percentiles).
+GRPC Request Duration: Duration of gRPC requests.
+Traffic Metrics
+
+HTTP Traffic: Volume of HTTP traffic (bytes in/out).
+TCP Traffic: Volume of TCP traffic (bytes in/out).
+Mesh-wide Metrics
+Service Metrics
+
+Service Request Count: Number of requests per service.
+Service Error Rate: Rate of errors per service.
+Service Latency: Latency of requests per service.
+Workload Metrics
+
+Workload Request Count: Number of requests per workload.
+Workload Error Rate: Rate of errors per workload.
+Workload Latency: Latency of requests per workload.
+Namespace Metrics
+
+Namespace Request Count: Number of requests per namespace.
+Namespace Error Rate: Rate of errors per namespace.
+Namespace Latency: Latency of requests per namespace.
+Security Metrics
+Authentication Metrics
+
+Authentication Success/Failure: Number of successful and failed authentication attempts.
+MTLS Handshakes: Number and rate of mTLS handshakes.
+Token Expiration: Monitor token expiration times.
+Authorization Metrics
+
+Authorization Success/Failure: Number of successful and failed authorization checks.
+Networking Metrics
+Ingress/Egress Metrics
+Request Count: Number of requests through ingress and egress gateways.
+Request Duration: Duration of requests through ingress and egress gateways.
+Error Rate: Rate of errors through ingress and egress gateways.
+Multi-cluster Metrics
+Cluster Health
+
+Cluster Availability: Status of clusters (up/down).
+Synchronization Status: Status of configuration synchronization across clusters.
+Inter-cluster Latency: Latency of requests between clusters.
+Cluster Resource Utilization
+
+CPU Usage: CPU utilization per cluster.
+Memory Usage: Memory utilization per cluster.
+Disk Usage: Disk space utilization per cluster.
+Application Performance Metrics
+Request Latency: Latency of requests across services.
+Request Rate: Number of requests per second across services.
+Error Rate: Number of failed requests per second across services.
