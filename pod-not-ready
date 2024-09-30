@@ -1,0 +1,54 @@
+To create an alert in Dynatrace when a Kubernetes pod's status is "Not Ready" and its phase is not "Succeeded", you can use Dynatrace's DQL (Dynatrace Query Language) to monitor these metrics and create custom alerts.
+
+Step 1: Query Pod Status and Phase using DQL
+You can use Dynatrace's metrics related to pod readiness and pod phase. The two key metrics to monitor are:
+
+kubernetes.pod.ready: Indicates whether a pod is ready (true or false).
+kubernetes.pod.phase: The phase of the pod, such as Running, Pending, Succeeded, etc.
+DQL Query Example:
+dql
+Copy code
+fetch k8s:pod
+| filter podReady == false and podPhase != "Succeeded"
+| summarize count() by podName, namespace, podPhase
+This query checks for pods that are not ready and are not in the Succeeded phase.
+
+Step 2: Set Up a Custom Event for Alerting
+Go to Dynatrace Console:
+
+Navigate to Settings -> Anomaly detection -> Custom events for alerting.
+Create a New Custom Event for Alerting:
+
+Event type: Select Metric event.
+Define Metric:
+
+Metric: Search for kubernetes.pod.ready and kubernetes.pod.phase.
+You can optionally filter to specific namespaces or clusters if needed.
+Set Alert Conditions:
+
+Set conditions based on pod readiness and phase:
+Condition 1: kubernetes.pod.ready == false
+Condition 2: kubernetes.pod.phase != "Succeeded"
+Combine both conditions using a logical AND.
+Alerting Threshold:
+
+You can specify the threshold for the alert to trigger when the condition is met (e.g., alert if any pod meets the criteria over a time window).
+Configure Notification:
+
+Set up the alerting profile and choose your notification channel (email, Slack, webhook, etc.).
+Save and Activate:
+
+Save the custom event, and Dynatrace will trigger alerts when a pod is not ready and its phase is not Succeeded.
+Example Configuration:
+Condition:
+Metric: kubernetes.pod.ready == false
+AND
+Metric: kubernetes.pod.phase != "Succeeded"
+Step 3: Visualization and Dashboard
+Use the DQL query to create a custom dashboard showing the status of pods.
+Set up real-time monitoring to track pods that fail to reach the "Ready" state and don't move to the "Succeeded" phase.
+Summary:
+Query pod readiness and pod phase using DQL.
+Set up a Custom Event for Alerting based on the pod not being ready and not in the Succeeded phase.
+Configure notification channels for real-time alerts.
+This approach ensures you'll receive alerts when pods are not ready and haven't reached the successful completion phase.
