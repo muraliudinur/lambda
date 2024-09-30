@@ -1,0 +1,54 @@
+To create an alert in Dynatrace whenever a Kubernetes pod is restarted, you can use Dynatrace's Log Monitoring, DQL (Dynatrace Query Language), and Custom Event for Alerting features. The key is to monitor the logs or metrics related to pod restarts and then trigger an alert based on that data.
+
+Step 1: Use DQL to Query Pod Restarts
+Dynatrace captures Kubernetes events such as pod restarts. You can use DQL to query logs or metrics related to pod restarts by monitoring the kubernetes.container.restarts metric.
+
+DQL Query Example for Pod Restarts:
+dql
+Copy code
+fetch k8s:container.restarts
+| filter restartCount > 0
+| summarize count() by podName, containerName, restartCount
+This query checks for containers that have been restarted and summarizes the count of restarts per pod and container.
+
+Step 2: Create a Custom Event for Alerting
+Go to the Dynatrace Console:
+
+Navigate to Settings -> Anomaly detection -> Custom events for alerting.
+Create a New Custom Alert:
+
+Event type: Select Metric event.
+Define Metric:
+
+Metric: Search for kubernetes.container.restarts.
+Filter: You can apply filters to scope it down to specific pods, namespaces, or clusters if necessary.
+Set Alert Condition:
+
+In the Condition section, set a condition to trigger the alert when the restart count exceeds 0 (or any threshold value you deem necessary).
+Example: "If the restartCount is greater than 0, trigger an alert."
+Alerting Threshold:
+
+Define the alerting threshold based on your needs (e.g., alert if the restart count exceeds 0 in a specified time interval).
+Configure Notification:
+
+Set up your alerting profile, and choose the notification channel (email, Slack, webhook, etc.) to receive alerts.
+Save and Activate:
+
+Save your custom event configuration, and Dynatrace will now trigger alerts when a pod is restarted based on your defined criteria.
+Step 3: Visualizing in Dynatrace
+You can also visualize the pod restart information by:
+
+Creating a dashboard in Dynatrace with the above query or metric to monitor real-time pod restart activity.
+Use the kubernetes.container.restarts metric to build charts and graphs for better visibility into pod restarts.
+Summary of Steps:
+Query pod restarts using DQL.
+Set up a custom alert on the kubernetes.container.restarts metric.
+Define conditions and thresholds for triggering an alert.
+Set up notifications for alerts.
+This approach ensures that you receive alerts in real time whenever a Kubernetes pod is restarted in your environment.
+
+
+
+
+
+
