@@ -1,0 +1,44 @@
+pipeline:
+  name: PostgreSQL Pipeline
+  identifier: postgresql_pipeline
+  stages:
+    - stage:
+        name: Run PostgreSQL
+        identifier: run_postgresql
+        type: CI
+        spec:
+          infrastructure:
+            type: Docker
+            spec:
+              connectorRef: dockerhub
+              host: tcp://docker:2375
+          execution:
+            steps:
+              - step:
+                  type: RunContainer
+                  name: PostgreSQL Container
+                  identifier: postgresql_container
+                  spec:
+                    connectorRef: dockerhub
+                    image: postgres:latest
+                    envVariables:
+                      - name: POSTGRES_USER
+                        value: admin
+                      - name: POSTGRES_PASSWORD
+                        value: admin123
+                      - name: POSTGRES_DB
+                        value: mydatabase
+                    ports:
+                      - 5432:5432
+                    volumes:
+                      - name: postgres-data
+                        mountPath: /var/lib/postgresql/data
+                        sourcePath: /path/to/local/data
+              - step:
+                  type: ShellScript
+                  name: Initialize Schema
+                  identifier: initialize_schema
+                  spec:
+                    shell: Bash
+                    command: |
+                      docker exec -i $(docker ps -qf "ancestor=postgres:latest") psql -U admin -d mydatabase -f /docker-entrypoint-initdb.d/init.sql
