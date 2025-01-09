@@ -1,0 +1,118 @@
+Creating a Harness pipeline to run psql commands inside a PostgreSQL Docker container, load a schema SQL file from a GitHub repository, and include an approval step requires several components. Here’s a detailed guide:
+
+Step 1: Setup Prerequisites
+Delegate:
+
+Ensure a Harness delegate is running and accessible.
+GitHub Repository:
+
+Store your schema SQL file (e.g., schemas/schema.sql) in a GitHub repository.
+Configure a Harness GitHub connector with appropriate permissions.
+Docker Image:
+
+Use the official PostgreSQL Docker image.
+Approval Policy:
+
+Define who approves the execution step.
+Step 2: Define the Pipeline
+Navigate to Harness Pipelines.
+Create a new pipeline or edit an existing one.
+Step 3: Add Stages and Steps
+Stage 1: Git Clone and PostgreSQL Container Setup
+Add a Build/Deploy Stage to the pipeline.
+
+Add a Shell Script Step to:
+
+Pull the PostgreSQL Docker image.
+Start the container.
+Clone the GitHub repository to fetch the schema file.
+Example Script:
+
+bash
+Copy code
+# Pull PostgreSQL Docker image and run container
+docker run -d --name postgres-container \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=admin123 \
+  -e POSTGRES_DB=mydatabase \
+  -p 5432:5432 postgres:latest
+
+# Clone GitHub repository
+git clone https://github.com/<username>/<repository>.git
+cd <repository>
+Stage 2: Approval Step
+Add an Approval Stage to the pipeline.
+
+Configure the approval step:
+
+Assign it to a group or specific users.
+Provide a message describing the purpose of the approval.
+Example Configuration:
+
+Name: "Schema Deployment Approval"
+Approver(s): Add user groups or individuals.
+Message: "Approve to apply the schema changes to the database."
+Stage 3: Execute psql Commands
+Add another Build/Deploy Stage.
+
+Add a Shell Script Step to run psql commands inside the PostgreSQL container using the schema SQL file.
+
+Example Script:
+
+bash
+Copy code
+# Apply schema to the database
+docker exec -i postgres-container psql -U admin -d mydatabase -f /repository/schemas/schema.sql
+Stage 4: Cleanup (Optional)
+Add a Shell Script Step to stop and remove the Docker container after execution.
+
+Example Script:
+
+bash
+Copy code
+# Stop and remove PostgreSQL container
+docker stop postgres-container
+docker rm postgres-container
+Step 4: Configure Pipeline Settings
+Variables:
+
+Define runtime variables for credentials, GitHub repo, or database name.
+Example Variables:
+
+POSTGRES_USER
+POSTGRES_PASSWORD
+GITHUB_REPO
+SCHEMA_FILE
+Secrets Management:
+
+Store sensitive values (e.g., POSTGRES_PASSWORD) in Harness Secrets Manager.
+Step 5: Execute the Pipeline
+Save the pipeline.
+Trigger the pipeline execution.
+When the pipeline reaches the Approval Step, approvers must manually approve it to proceed.
+Full Pipeline Workflow
+Stage 1:
+
+Pull PostgreSQL Docker image.
+Start the container.
+Clone the GitHub repository to fetch the schema SQL file.
+Stage 2:
+
+Pause for manual approval.
+Stage 3:
+
+Run psql commands inside the container to apply the schema.
+Stage 4 (Optional):
+
+Stop and remove the PostgreSQL container.
+Additional Notes
+Error Handling:
+
+Use set -e in scripts to fail the pipeline if any command fails.
+Add conditional checks to ensure the schema file exists before executing.
+Approvals:
+
+Approval steps can be configured to expire after a certain time or notify approvers via email.
+Audit Trail:
+
+Harness logs every pipeline execution, including who approved the steps.
