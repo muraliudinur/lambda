@@ -1,0 +1,104 @@
+pipeline:
+  name: Postgres IAM Auth Pipeline
+  identifier: postgres_iam_auth_pipeline
+  description: Pipeline to run psql commands using AWS IAM RDS authentication and apply schema
+  projectIdentifier: <your_project_identifier>
+  orgIdentifier: <your_org_identifier>
+  tags: {}
+  stages:
+    - stage:
+        name: Apply Schema with IAM Auth
+        identifier: apply_schema_with_iam_auth
+        description: Run schema SQL using AWS IAM authentication
+        type: Deployment
+        spec:
+          serviceConfig:
+            serviceRef: <your_service_reference>
+            stageOverrides: {}
+          infrastructure:
+            environmentRef: <your_environment_reference>
+            infrastructureDefinitionRef: <your_infrastructure_definition_reference>
+            allowSimultaneousDeployments: false
+          execution:
+            steps:
+              # Step 1: Approval Step
+              - step:
+                  type: HarnessApproval
+                  name: Approval Step
+                  identifier: approval_step
+                  timeout: 1d
+                  spec:
+                    approvalMessage: "Do you approve running the schema on RDS?"
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      userGroups:
+                        - <your_user_group>
+                      minimumCount: 1
+
+              # Step 2: Clone Schema SQL from GitHub
+              - step:
+                  type: Run
+                  name: Clone Schema SQL
+                  identifier: clone_schema_sql
+                  spec:
+                    connectorRef: <github_connector_reference>
+                    command: |
+                      git clone https://github.com/<username>/<repository>.git
+                      cd <repository>
+                      echo "Schema file cloned successfully."
+
+              # Step 3: Run psql Commands in PostgreSQL Docker Container
+              - step:
+                  type: ShellScript
+                  name: Apply Schema
+                  identifier: apply_schema
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          # Variables
+                          DB_HOST="<your_rds_endpoint>"
+                          DB_NAME="<your_database_name>"
+                          DB_USER="<your_database_user>"
+                          REGION="<your_aws_region>"
+
+                          # Generate IAM Token
+                          IAM_TOKEN=$(aws rds generate-db-auth-token \
+                            --hostname $DB_HOST \
+                            --port 5432 \
+                            --region $REGION \
+                            --username $DB_USER)
+
+                          echo "IAM Token generated successfully."
+
+                          # Run PostgreSQL Docker Container
+                          docker run -d --name postgres-container \
+                            -e PGHOST=$DB_HOST \
+                            -e PGPORT=5432 \
+                            -e PGUSER=$DB_USER \
+                            -e PGPASSWORD=$IAM_TOKEN \
+                            postgres:latest
+
+                          echo "PostgreSQL Docker container started."
+
+                          # Wait for container to be ready
+                          sleep 10
+
+                          # Apply the schema
+                          docker exec -i postgres-container psql \
+                            -h $DB_HOST \
+                            -U $DB_USER \
+                            -d $DB_NAME \
+                            -f <repository>/schemas/schema.sql
+
+                          echo "Schema applied successfully."
+
+                          # Cleanup
+                          docker stop postgres-container
+                          docker rm postgres-container
+                    environmentVariables: {}
+                    outputVariables: {}
+                    executionTarget: {}
