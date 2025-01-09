@@ -1,0 +1,17 @@
+# Step 1: Pull and run PostgreSQL container
+docker run -d --name postgres-container \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=admin123 \
+  -e POSTGRES_DB=mydatabase \
+  -p 5432:5432 postgres:latest
+
+# Step 2: Clone the GitHub repository
+git clone https://github.com/<username>/<repository>.git
+cd <repository>
+
+# Step 3: Run schema SQL file inside the PostgreSQL container
+docker exec -i postgres-container psql -U admin -d mydatabase -f schemas/schema.sql
+
+# Step 4: Cleanup (optional)
+docker stop postgres-container
+docker rm postgres-container
