@@ -1,0 +1,101 @@
+
+Creating a Harness pipeline to set up a PostgreSQL Docker container, connect to an AWS RDS PostgreSQL instance using AWS IAM authentication and SSL, load a schema SQL file from a GitHub repository, and include an approval step involves the following process:
+
+Step 1: Prerequisites
+AWS RDS IAM Authentication:
+
+Ensure the RDS instance is configured for IAM authentication.
+Add the required AWS IAM role or user to the RDS DB instance.
+SSL Configuration:
+
+Download the RDS CA certificate from AWS Documentation.
+GitHub Repository:
+
+Store the schema SQL file in a GitHub repository (e.g., schemas/schema.sql).
+Configure a GitHub connector in Harness for secure access.
+Delegate Configuration:
+
+Ensure the Harness delegate has the necessary AWS CLI and Docker installed.
+Step 2: Harness Pipeline Configuration
+2.1: Create the Pipeline
+Navigate to Pipelines in the Harness UI.
+Create a new pipeline.
+Step 3: Add Stages and Steps
+3.1: Approval Step
+Add a Manual Approval Step as the first step.
+Configure approvers as needed.
+3.2: AWS IAM Token Generation Step
+Add a Shell Script Step to generate an IAM token for RDS authentication:
+
+bash
+Copy code
+export REGION=<aws-region>
+export RDS_ENDPOINT=<rds-endpoint>
+export DB_USER=<db-username>
+
+# Generate IAM token
+export IAM_TOKEN=$(aws rds generate-db-auth-token \
+    --hostname $RDS_ENDPOINT \
+    --port 5432 \
+    --region $REGION \
+    --username $DB_USER)
+
+echo "IAM_TOKEN generated successfully"
+Capture the IAM Token:
+
+Use Harness output variables to pass the IAM_TOKEN to subsequent steps.
+3.3: Pull and Run PostgreSQL Docker Container
+Add another Shell Script Step to pull and run the PostgreSQL container:
+bash
+Copy code
+docker run -d --name postgres-container \
+    -v $(pwd):/sql \
+    postgres:latest
+3.4: Clone GitHub Repository
+Add a Git Clone Step to fetch the schema file from the GitHub repository:
+
+Configure the repository and branch in the step settings.
+Verify the schema file is present:
+
+bash
+Copy code
+ls schemas/schema.sql
+3.5: Run psql Commands with SSL
+Add a Shell Script Step to execute psql commands:
+
+bash
+Copy code
+export RDS_ENDPOINT=<rds-endpoint>
+export DB_USER=<db-username>
+export DB_NAME=<database-name>
+export IAM_TOKEN=<captured-iam-token>
+export SSL_CA_CERT=<path-to-rds-ca-certificate>
+
+# Load schema using psql
+PGPASSWORD=$IAM_TOKEN psql \
+    "host=$RDS_ENDPOINT port=5432 dbname=$DB_NAME user=$DB_USER sslmode=verify-full sslrootcert=$SSL_CA_CERT" \
+    -f schemas/schema.sql
+Ensure the step is configured to handle SSL verification properly by using the downloaded RDS CA certificate.
+
+Step 4: Add Cleanup Step (Optional)
+To clean up resources (e.g., Docker containers), add a step:
+
+bash
+Copy code
+docker stop postgres-container
+docker rm postgres-container
+Step 5: Execute the Pipeline
+Trigger the pipeline.
+Approve the manual approval step.
+Monitor the logs for successful execution.
+Summary of Steps
+Manual Approval Step: Require user approval before proceeding.
+AWS IAM Token Generation: Generate an IAM authentication token using the AWS CLI.
+Run PostgreSQL Docker Container: Spin up a PostgreSQL Docker container for the operation.
+Clone GitHub Repository: Fetch the schema file from a GitHub repository.
+Run psql with SSL: Load the schema into the RDS instance using the IAM token and SSL.
+Tips
+Use Harness runtime variables for flexibility in RDS credentials, regions, and file paths.
+Test each step independently before integrating them into the pipeline.
+Store sensitive information securely in Harness secrets.
+Let me know if you need further assistance or refinements!
