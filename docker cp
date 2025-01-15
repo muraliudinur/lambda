@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SQL_FILE_PATH="/path/to/script.sql"
+CONTAINER_NAME="postgres_container"
+DB_USER="postgres"
+DB_NAME="my_database"
+
+# Copy the SQL file to the container
+docker cp $SQL_FILE_PATH $CONTAINER_NAME:/tmp/script.sql
+
+# Run the SQL file using psql
+docker exec -it $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -f /tmp/script.sql
