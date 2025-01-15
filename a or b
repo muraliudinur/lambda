@@ -1,0 +1,9 @@
+if [ "$RUN_COMMAND_A" = "true" ]; then
+  echo "Running Command A"
+  # Replace this with Command A
+  command_a
+else
+  echo "Running Command B"
+  # Replace this with Command B
+  command_b
+fi
