@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Name of the container to check
+CONTAINER_NAME="your_container_name"
+
+# Check if the container is running
+if docker ps --filter "name=$CONTAINER_NAME" --format "{{.Names}}" | grep -w "$CONTAINER_NAME" > /dev/null; then
+  echo "Container '$CONTAINER_NAME' is running. Stopping and removing it..."
+
+  # Stop the container
+  docker stop "$CONTAINER_NAME"
+
+  # Remove the container
+  docker rm "$CONTAINER_NAME"
+
+  echo "Container '$CONTAINER_NAME' has been stopped and removed."
+else
+  echo "Container '$CONTAINER_NAME' is not running."
+fi
+
+# Check if the container exists but is stopped
+if docker ps -a --filter "name=$CONTAINER_NAME" --format "{{.Names}}" | grep -w "$CONTAINER_NAME" > /dev/null; then
+  echo "Container '$CONTAINER_NAME' exists but is stopped. Removing it..."
+
+  # Remove the container
+  docker rm "$CONTAINER_NAME"
+
+  echo "Container '$CONTAINER_NAME' has been removed."
+fi
