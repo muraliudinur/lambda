@@ -1,0 +1,44 @@
+Step 1: Create a User Data Template File (userdata.ps1)
+Save this as userdata.ps1 in your Terraform working directory:
+
+powershell
+Copy
+Edit
+<powershell>
+# Example: Install pgAdmin on Windows EC2
+
+$pgAdminInstaller = "https://ftp.postgresql.org/pub/pgadmin/pgadmin4/v6.20/windows/pgadmin4-6.20-x64.exe"
+$installerPath = "C:\\pgadmin4-setup.exe"
+
+# Download pgAdmin Installer
+Invoke-WebRequest -Uri $pgAdminInstaller -OutFile $installerPath
+
+# Run Installer in Silent Mode
+Start-Process -FilePath $installerPath -ArgumentList "/SILENT" -Wait
+
+# Create a log file to verify installation
+New-Item -Path "C:\pgadmin_installation.log" -ItemType File -Value "pgAdmin Installation Completed"
+</powershell>
+🔹 Step 2: Reference the User Data Template in Terraform
+Modify your Terraform configuration to use templatefile() and base64encode():
+
+hcl
+Copy
+Edit
+provider "aws" {
+  region = "us-east-1" # Change as needed
+}
+
+resource "aws_instance" "windows_ec2" {
+  ami           = "ami-0f2c50dc4adfda678"  # Windows Server 2022 AMI (Check AWS for latest)
+  instance_type = "t3.medium"
+  key_name      = aws_key_pair.ec2_key.key_name
+  subnet_id     = "subnet-xxxxxxxx"  # Replace with your subnet ID
+  security_groups = ["windows-security-group"] # Replace with your security group
+
+  user_data = base64encode(templatefile("${path.module}/userdata.ps1", {}))
+
+  tags = {
+    Name = "Windows-PGAdmin"
+  }
+}
