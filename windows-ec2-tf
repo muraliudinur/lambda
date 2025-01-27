@@ -1,0 +1,70 @@
+provider "aws" {
+  region = "us-east-1"  # Change as needed
+}
+
+# Security Group to Allow RDP and PostgreSQL Access
+resource "aws_security_group" "windows_sg" {
+  name        = "windows-pgadmin-sg"
+  description = "Allow RDP and PostgreSQL access"
+
+  ingress {
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Allow RDP (Restrict in production)
+  }
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Allow PostgreSQL
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Windows EC2 Instance
+resource "aws_instance" "windows_ec2" {
+  ami           = "ami-0fc5d935ebf8bc3bc"  # Update with the latest Windows AMI
+  instance_type = "t3.medium"  # Change based on requirements
+  key_name      = "my-key-pair"  # Replace with your key pair
+  security_groups = [aws_security_group.windows_sg.name]
+
+  tags = {
+    Name = "Windows-PgAdmin"
+  }
+
+  user_data = <<-EOF
+    <powershell>
+    # Download pgAdmin 4 installer
+    $pgAdminUrl = "https://ftp.postgresql.org/pub/pgadmin/pgadmin4/v7.6/windows/pgadmin4-7.6-x64.exe"
+    $installerPath = "C:\\pgadmin4-installer.exe"
+
+    Invoke-WebRequest -Uri $pgAdminUrl -OutFile $installerPath
+
+    # Install pgAdmin 4 silently
+    Start-Process -FilePath $installerPath -ArgumentList "/SILENT" -Wait
+
+    # Create a Desktop Shortcut
+    $WshShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WshShell.CreateShortcut("C:\\Users\\Administrator\\Desktop\\pgAdmin4.lnk")
+    $Shortcut.TargetPath = "C:\\Program Files\\pgAdmin 4\\v7\\pgAdmin4.exe"
+    $Shortcut.Save()
+    
+    </powershell>
+  EOF
+
+  # Enable Windows Password Decryption
+  get_password_data = true
+}
+
+# Output Windows Instance Public IP
+output "windows_ec2_ip" {
+  value = aws_instance.windows_ec2.public_ip
+}
