@@ -1,0 +1,87 @@
+Step 2: Create an AWS Key Pair
+hcl
+Copy
+Edit
+resource "tls_private_key" "ec2_key" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "aws_key_pair" "ec2_key" {
+  key_name   = "windows-key"
+  public_key = tls_private_key.ec2_key.public_key_openssh
+}
+
+resource "local_file" "private_key" {
+  filename = "windows-key.pem"
+  content  = tls_private_key.ec2_key.private_key_pem
+}
+🔹 Generates a Key Pair and saves the private key locally (windows-key.pem).
+🔹 This key is used to decrypt the Windows Administrator password.
+
+🔹 Step 3: Create a Windows EC2 Instance with User Data for pgAdmin
+hcl
+Copy
+Edit
+resource "aws_instance" "windows_ec2" {
+  ami           = "ami-0f2c50dc4adfda678"  # Windows Server 2022 (check latest AMI)
+  instance_type = "t3.medium"
+  key_name      = aws_key_pair.ec2_key.key_name
+  subnet_id     = "subnet-xxxxxxxx"  # Replace with your subnet ID
+  security_groups = ["windows-security-group"] # Replace with your security group
+
+  user_data = <<EOF
+<powershell>
+# Download and Install pgAdmin
+$pgAdminInstaller = "https://ftp.postgresql.org/pub/pgadmin/pgadmin4/v6.20/windows/pgadmin4-6.20-x64.exe"
+$installerPath = "C:\\pgadmin4-setup.exe"
+
+Invoke-WebRequest -Uri $pgAdminInstaller -OutFile $installerPath
+Start-Process -FilePath $installerPath -ArgumentList "/SILENT" -Wait
+</powershell>
+EOF
+
+  tags = {
+    Name = "Windows-PGAdmin"
+  }
+}
+🔹 Uses User Data to install pgAdmin on startup.
+🔹 Ensure the AMI is a Windows AMI (Check AWS AMI Catalog for the latest).
+
+🔹 Step 4: Retrieve Windows Administrator Password
+hcl
+Copy
+Edit
+data "aws_instance" "windows_ec2" {
+  instance_id = aws_instance.windows_ec2.id
+}
+
+resource "null_resource" "decrypt_admin_password" {
+  provisioner "local-exec" {
+    command = <<EOT
+      aws ec2 get-password-data --instance-id ${aws_instance.windows_ec2.id} --priv-key-file windows-key.pem > decrypted_password.json
+    EOT
+  }
+}
+🔹 Retrieves the Windows administrator password using the Key Pair.
+🔹 Stores it in a JSON file (decrypted_password.json).
+
+🔹 Step 5: Store the Decrypted Password in HashiCorp Vault
+hcl
+Copy
+Edit
+provider "vault" {
+  address = "http://127.0.0.1:8200" # Replace with your Vault server
+}
+
+resource "vault_generic_secret" "ec2_admin_password" {
+  path = "secret/aws/windows_admin_password"
+
+  data_json = <<EOT
+{
+  "instance_id": "${aws_instance.windows_ec2.id}",
+  "username": "Administrator",
+  "password": "${file("decrypted_password.json")}"
+}
+EOT
+}
