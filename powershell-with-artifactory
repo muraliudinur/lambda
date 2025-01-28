@@ -1,0 +1,72 @@
+Step 1: Define Variables (variables.tf)
+hcl
+Copy
+Edit
+variable "artifactory_url" {
+  description = "URL of the Artifactory repository"
+  type        = string
+  default     = "https://your-artifactory-url/artifactory/windows-binaries"
+}
+
+variable "artifactory_user" {
+  description = "Artifactory username"
+  type        = string
+}
+
+variable "artifactory_password" {
+  description = "Artifactory password"
+  type        = string
+  sensitive   = true
+}
+🔹 Step 2: Create the Windows EC2 Instance with User Data (main.tf)
+hcl
+Copy
+Edit
+resource "aws_instance" "windows_ec2" {
+  ami           = "ami-0f2c50dc4adfda678"  # Replace with latest Windows AMI
+  instance_type = "t3.medium"
+  key_name      = aws_key_pair.ec2_key.key_name
+  subnet_id     = "subnet-xxxxxxxx"  # Replace with your subnet ID
+  security_groups = ["windows-security-group"] # Replace with your security group
+
+  user_data = templatefile("userdata.ps1", {
+    ARTIFACTORY_URL  = var.artifactory_url
+    ARTIFACTORY_USER = var.artifactory_user
+    ARTIFACTORY_PASS = var.artifactory_password
+  })
+
+  tags = {
+    Name = "Windows-EC2-Install-PgAdmin"
+  }
+}
+🔹 Uses a PowerShell script (userdata.ps1) to download and install the binary.
+
+🔹 Step 3: Create the PowerShell Script (userdata.ps1)
+powershell
+Copy
+Edit
+<powershell>
+# Variables
+$ArtifactoryUrl = "${ARTIFACTORY_URL}/pgadmin/pgadmin4-6.20-x64.exe"
+$DownloadPath = "C:\temp\pgadmin4-setup.exe"
+
+# Ensure Temp Directory Exists
+New-Item -Path "C:\temp" -ItemType Directory -Force
+
+# Download pgAdmin from Artifactory
+$User = "${ARTIFACTORY_USER}"
+$Password = "${ARTIFACTORY_PASS}"
+$EncodedCredentials = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$User`:$Password"))
+
+$Headers = @{
+    Authorization = "Basic $EncodedCredentials"
+}
+
+Invoke-WebRequest -Uri $ArtifactoryUrl -OutFile $DownloadPath -Headers $Headers
+
+# Install pgAdmin silently
+Start-Process -FilePath $DownloadPath -ArgumentList "/SILENT" -Wait
+
+# Cleanup
+Remove-Item -Path $DownloadPath -Force
+</powershell>
