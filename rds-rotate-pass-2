@@ -1,0 +1,130 @@
+Here's a Python-based AWS Lambda function that:
+
+Fetches the master user password from HashiCorp Vault.
+Generates a new password for the RDS PostgreSQL user.
+Uses psql (PostgreSQL CLI) instead of psycopg2 to update the password.
+Stores the new password in HashiCorp Vault as a new version.
+Prerequisites
+Lambda Environment Variables:
+
+VAULT_ADDR → HashiCorp Vault API URL (http://vault.example.com:8200)
+VAULT_TOKEN → Vault access token (or use IAM authentication)
+MASTER_SECRET_PATH → Vault path for master credentials (secret/db/master)
+ROTATED_SECRET_PATH → Vault path for rotated user credentials (secret/db/rotated-user)
+DB_USER → The RDS PostgreSQL user whose password is being rotated
+DB_HOST → The PostgreSQL RDS endpoint
+DB_NAME → The PostgreSQL database name
+DB_PORT → PostgreSQL port (5432 by default)
+Ensure psql is Available in AWS Lambda
+
+Use a custom Lambda layer with psql or deploy a Lambda container with the required binaries.
+Lambda Function Using psql
+python
+Copy
+Edit
+import os
+import json
+import requests
+import subprocess
+import random
+import string
+
+# Environment Variables
+VAULT_ADDR = os.environ['VAULT_ADDR']
+VAULT_TOKEN = os.environ['VAULT_TOKEN']
+MASTER_SECRET_PATH = os.environ['MASTER_SECRET_PATH']
+ROTATED_SECRET_PATH = os.environ['ROTATED_SECRET_PATH']
+DB_USER = os.environ['DB_USER']
+DB_HOST = os.environ['DB_HOST']
+DB_NAME = os.environ['DB_NAME']
+DB_PORT = os.environ.get('DB_PORT', '5432')
+
+HEADERS = {"X-Vault-Token": VAULT_TOKEN}
+
+def get_vault_secret(path):
+    """Fetch secret from HashiCorp Vault."""
+    url = f"{VAULT_ADDR}/v1/{path}"
+    response = requests.get(url, headers=HEADERS)
+    if response.status_code == 200:
+        return response.json()["data"]
+    else:
+        raise Exception(f"Failed to fetch secret from {path}: {response.text}")
+
+def store_vault_secret(path, secret_data):
+    """Store new credentials in HashiCorp Vault."""
+    url = f"{VAULT_ADDR}/v1/{path}"
+    response = requests.post(url, headers=HEADERS, json={"data": secret_data})
+    if response.status_code not in [200, 204]:
+        raise Exception(f"Failed to store secret at {path}: {response.text}")
+
+def generate_password(length=16):
+    """Generate a strong random password."""
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(random.choice(chars) for _ in range(length))
+
+def update_db_password(db_user, new_password, master_credentials):
+    """Update PostgreSQL user password using the `psql` command."""
+    psql_command = [
+        "psql",
+        f"--host={DB_HOST}",
+        f"--port={DB_PORT}",
+        f"--username={master_credentials['username']}",
+        f"--dbname={DB_NAME}",
+        "-c",
+        f"ALTER USER {db_user} WITH PASSWORD '{new_password}';"
+    ]
+    
+    env = os.environ.copy()
+    env["PGPASSWORD"] = master_credentials["password"]  # Set password in env for psql authentication
+
+    try:
+        result = subprocess.run(psql_command, env=env, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"Password updated for user {db_user}")
+        else:
+            raise Exception(f"Error updating password: {result.stderr}")
+    except Exception as e:
+        print(f"Error executing psql command: {str(e)}")
+        raise
+
+def lambda_handler(event, context):
+    """AWS Lambda Entry Point"""
+    try:
+        print("Fetching master credentials from HashiCorp Vault...")
+        master_credentials = get_vault_secret(MASTER_SECRET_PATH)
+
+        print("Generating a new password for the RDS user...")
+        new_password = generate_password()
+
+        print(f"Updating password for user {DB_USER} in PostgreSQL database using `psql`...")
+        update_db_password(DB_USER, new_password, master_credentials)
+
+        print("Storing the new password in HashiCorp Vault...")
+        store_vault_secret(ROTATED_SECRET_PATH, {"username": DB_USER, "password": new_password})
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps(f"Password rotation successful for {DB_USER}")
+        }
+    except Exception as e:
+        print(f"Error during password rotation: {str(e)}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps("Password rotation failed")
+        }
+How This Works
+
+
+Deployment Steps
+1. Package and Deploy with psql
+AWS Lambda doesn’t come with psql by default. Use one of these methods:
+
+Use a custom AWS Lambda layer with psql installed.
+Deploy Lambda as a Docker container with psql included.
+2. Configure IAM & Network Access
+Lambda must have access to RDS (VPC configuration).
+HashiCorp Vault must be accessible from Lambda.
+Store the Vault token securely.
+3. Test the Function
+Manually trigger the Lambda function to ensure it rotates the password successfully.
+
