@@ -1,0 +1,93 @@
+import os
+import boto3
+import hvac
+import psycopg2
+import logging
+import random
+import string
+
+# Configurations
+VAULT_SERVER = os.getenv("VAULT_SERVER")
+VAULT_NAMESPACE = os.getenv("VAULT_NAMESPACE")
+VAULT_ROLE = os.getenv("VAULT_ROLE")
+DB_SECRET_PATH = os.getenv("DB_SECRET_PATH")  # e.g., "database/master"
+RDS_HOST = os.getenv("RDS_HOST")
+
+# AWS Region
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+
+# Users to rotate
+DB_USERS = ["readonly_user", "readwrite_user"]
+
+# Logger setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
+
+def get_vault_client():
+    """ Authenticate with Vault using AWS IAM and return a client """
+    session = boto3.session.Session(region_name=AWS_REGION)
+    aws_credentials = session.get_credentials()
+    
+    vault_client = hvac.Client(url=VAULT_SERVER, verify=False, namespace=f"aws/{VAULT_NAMESPACE}")
+    
+    logger.info("Logging into Vault using AWS IAM")
+    vault_client.auth.aws.iam_login(
+        access_key=aws_credentials.access_key,
+        secret_key=aws_credentials.secret_key,
+        session_token=aws_credentials.token,
+        role=VAULT_ROLE
+    )
+    
+    return vault_client
+
+def get_master_credentials(vault_client):
+    """ Retrieve master DB credentials from Vault """
+    logger.info("Fetching master credentials from Vault")
+    response = vault_client.secrets.kv.v2.read_secret_version(path=DB_SECRET_PATH)
+    db_creds = response["data"]["data"]
+    return db_creds["username"], db_creds["password"]
+
+def generate_password(length=16):
+    """ Generate a secure random password """
+    characters = string.ascii_letters + string.digits + "!@#$%^&*"
+    return "".join(random.choice(characters) for _ in range(length))
+
+def rotate_db_passwords(vault_client, master_user, master_pass):
+    """ Rotate passwords for users in PostgreSQL and store in Vault """
+    new_passwords = {}
+
+    try:
+        conn = psycopg2.connect(
+            dbname="postgres",
+            user=master_user,
+            password=master_pass,
+            host=RDS_HOST
+        )
+        conn.autocommit = True
+        cursor = conn.cursor()
+
+        for user in DB_USERS:
+            new_password = generate_password()
+            cursor.execute(f"ALTER ROLE {user} WITH PASSWORD '{new_password}';")
+            new_passwords[user] = new_password
+            logger.info(f"Password updated for user: {user}")
+
+        cursor.close()
+        conn.close()
+
+        # Store new passwords in Vault
+        logger.info("Storing new passwords in Vault")
+        vault_client.secrets.kv.v2.create_or_update_secret(
+            path="database/users",
+            secret=new_passwords
+        )
+
+    except Exception as e:
+        logger.error(f"Error rotating passwords: {e}")
+
+def lambda_handler(event, context):
+    """ AWS Lambda entry point """
+    vault_client = get_vault_client()
+    master_user, master_pass = get_master_credentials(vault_client)
+    rotate_db_passwords(vault_client, master_user, master_pass)
+    return {"status": "success"}
