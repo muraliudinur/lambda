@@ -1,0 +1,174 @@
+We'll create two Lambda functions:
+
+Start RDS instance (lambda_start_rds.py)
+
+Stop RDS instance (lambda_stop_rds.py)
+
+Lambda Function to Start RDS (lambda_start_rds.py)
+python
+Copy
+Edit
+import boto3
+import os
+
+rds_client = boto3.client('rds')
+DB_INSTANCE_ID = os.getenv("DB_INSTANCE_ID")
+
+def lambda_handler(event, context):
+    try:
+        response = rds_client.start_db_instance(DBInstanceIdentifier=DB_INSTANCE_ID)
+        print(f"Starting RDS instance: {DB_INSTANCE_ID}")
+        return {"statusCode": 200, "body": f"Started RDS: {DB_INSTANCE_ID}"}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"statusCode": 500, "body": str(e)}
+Lambda Function to Stop RDS (lambda_stop_rds.py)
+python
+Copy
+Edit
+import boto3
+import os
+
+rds_client = boto3.client('rds')
+DB_INSTANCE_ID = os.getenv("DB_INSTANCE_ID")
+
+def lambda_handler(event, context):
+    try:
+        response = rds_client.stop_db_instance(DBInstanceIdentifier=DB_INSTANCE_ID)
+        print(f"Stopping RDS instance: {DB_INSTANCE_ID}")
+        return {"statusCode": 200, "body": f"Stopped RDS: {DB_INSTANCE_ID}"}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"statusCode": 500, "body": str(e)}
+3️⃣ Terraform Code to Deploy Lambda and CloudWatch Triggers
+This Terraform script will: ✅ Create IAM Role with permissions to start/stop RDS.
+✅ Deploy two Lambda functions (one for starting and one for stopping RDS).
+✅ Create CloudWatch Scheduled Rules to trigger them.
+
+Terraform Code (main.tf)
+hcl
+Copy
+Edit
+provider "aws" {
+  region = "us-east-1"
+}
+
+# IAM Role for Lambda
+resource "aws_iam_role" "lambda_rds_role" {
+  name = "lambda-rds-control-role"
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+# IAM Policy for RDS
+resource "aws_iam_policy" "rds_policy" {
+  name        = "lambda-rds-policy"
+  description = "Policy to start/stop RDS"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["rds:StartDBInstance", "rds:StopDBInstance"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach IAM Policy to Role
+resource "aws_iam_role_policy_attachment" "lambda_rds_attach" {
+  role       = aws_iam_role.lambda_rds_role.name
+  policy_arn = aws_iam_policy.rds_policy.arn
+}
+
+# Lambda function to start RDS
+resource "aws_lambda_function" "start_rds_lambda" {
+  function_name = "start-rds-lambda"
+  role          = aws_iam_role.lambda_rds_role.arn
+  handler       = "lambda_start_rds.lambda_handler"
+  runtime       = "python3.9"
+  timeout       = 30
+
+  filename         = "lambda_start_rds.zip"
+  source_code_hash = filebase64sha256("lambda_start_rds.zip")
+
+  environment {
+    variables = {
+      DB_INSTANCE_ID = "my-rds-instance-id"
+    }
+  }
+}
+
+# Lambda function to stop RDS
+resource "aws_lambda_function" "stop_rds_lambda" {
+  function_name = "stop-rds-lambda"
+  role          = aws_iam_role.lambda_rds_role.arn
+  handler       = "lambda_stop_rds.lambda_handler"
+  runtime       = "python3.9"
+  timeout       = 30
+
+  filename         = "lambda_stop_rds.zip"
+  source_code_hash = filebase64sha256("lambda_stop_rds.zip")
+
+  environment {
+    variables = {
+      DB_INSTANCE_ID = "my-rds-instance-id"
+    }
+  }
+}
+
+# CloudWatch Event Rule to Start RDS at 8 AM UTC
+resource "aws_cloudwatch_event_rule" "start_rds_schedule" {
+  name                = "start-rds-schedule"
+  schedule_expression = "cron(0 8 * * ? *)"  # Runs every day at 8 AM UTC
+}
+
+# CloudWatch Event Rule to Stop RDS at 6 PM UTC
+resource "aws_cloudwatch_event_rule" "stop_rds_schedule" {
+  name                = "stop-rds-schedule"
+  schedule_expression = "cron(0 18 * * ? *)"  # Runs every day at 6 PM UTC
+}
+
+# Attach Start Lambda to CloudWatch Rule
+resource "aws_cloudwatch_event_target" "start_rds_target" {
+  rule      = aws_cloudwatch_event_rule.start_rds_schedule.name
+  target_id = "StartRDSTarget"
+  arn       = aws_lambda_function.start_rds_lambda.arn
+}
+
+# Attach Stop Lambda to CloudWatch Rule
+resource "aws_cloudwatch_event_target" "stop_rds_target" {
+  rule      = aws_cloudwatch_event_rule.stop_rds_schedule.name
+  target_id = "StopRDSTarget"
+  arn       = aws_lambda_function.stop_rds_lambda.arn
+}
+
+# Allow CloudWatch to Invoke Start Lambda
+resource "aws_lambda_permission" "allow_start_cloudwatch" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.start_rds_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.start_rds_schedule.arn
+}
+
+# Allow CloudWatch to Invoke Stop Lambda
+resource "aws_lambda_permission" "allow_stop_cloudwatch" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.stop_rds_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.stop_rds_schedule.arn
+}
