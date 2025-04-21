@@ -1,9 +1,158 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" version="26.2.12">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" version="26.2.13" pages="2">
   <diagram name="Page-1" id="4G6epofbt5wFLUc0ixQZ">
     <mxGraphModel>
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="EwWfWh4jm_vDy2_dmVqk" name="Page-2">
+    <mxGraphModel dx="2490" dy="902" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-1" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="150" width="270" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-2" value="on-prem(Schools)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="120" y="150" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-3" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="120" y="220" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-4" value="Class Rooms" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="130" y="220" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-5" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://cdn4.iconfinder.com/data/icons/ios-web-user-interface-multi-circle-flat-vol-7/512/Ipod_music_electronic_device_music_ipod_songs-128.png" vertex="1" parent="1">
+          <mxGeometry x="151" y="260" width="68" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-6" value="Client Device" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="145" y="320" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-7" value="" style="points=[];aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.apigateway;" vertex="1" parent="1">
+          <mxGeometry x="300" y="269.15" width="43.199999999999996" height="41.699999999999996" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-8" value="Sender API" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="284.1" y="310.85" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-10" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="480" y="20" width="710" height="710" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-11" value="Azure Cloud" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.cloud;" vertex="1" parent="1">
+          <mxGeometry x="490" y="20" width="50" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-13" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="570" y="113" width="577" height="577" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-12" value="" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.azure_subscription;" vertex="1" parent="1">
+          <mxGeometry x="570" y="113" width="50" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-15" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/iot/IoT_Hub.svg;" vertex="1" parent="1">
+          <mxGeometry x="620" y="260" width="64" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-16" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="340" y="290" as="sourcePoint" />
+            <mxPoint x="620" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-17" value="" style="endArrow=classic;html=1;rounded=0;entryX=-0.031;entryY=0.628;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="bIh_L40pBOAvcIcf7J4U-5" target="bIh_L40pBOAvcIcf7J4U-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="210" y="300" as="sourcePoint" />
+            <mxPoint x="520" y="330" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-19" value="PostgreSQL" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="207" y="380" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-22" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Azure_Database_PostgreSQL_Server.svg;" vertex="1" parent="1">
+          <mxGeometry x="267" y="360" width="33" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-23" value="Azure IOT Hub" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="630" y="338" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-24" value="" style="endArrow=none;dashed=1;html=1;rounded=0;exitX=0.728;exitY=-0.206;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.136;entryY=0.636;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="bIh_L40pBOAvcIcf7J4U-8" target="bIh_L40pBOAvcIcf7J4U-22">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="510" y="380" as="sourcePoint" />
+            <mxPoint x="560" y="330" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="340" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-25" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Function_Apps.svg;" vertex="1" parent="1">
+          <mxGeometry x="782" y="268" width="68" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-26" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.01;entryY=0.37;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="bIh_L40pBOAvcIcf7J4U-25">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="666.5" y="289.5" as="sourcePoint" />
+            <mxPoint x="760" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-28" value="Notification Hub" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="606" y="500.00000000000006" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-30" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Azure_Cosmos_DB.svg;" vertex="1" parent="1">
+          <mxGeometry x="960" y="170" width="64" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-31" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.951;exitY=0.6;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.313;entryY=0.875;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="bIh_L40pBOAvcIcf7J4U-25" target="bIh_L40pBOAvcIcf7J4U-30">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="900" y="280" as="sourcePoint" />
+            <mxPoint x="950" y="230" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="980" y="304" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-32" value="Azure Cosmos DB" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="946" y="140" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-33" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/other/Azure_Monitor_Dashboard.svg;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="386.8" width="68" height="63.2" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-34" value="Azure Function App" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="810" y="324" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-36" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.059;entryY=0.736;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="bIh_L40pBOAvcIcf7J4U-34" target="bIh_L40pBOAvcIcf7J4U-33">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="900" y="480" as="sourcePoint" />
+            <mxPoint x="950" y="430" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="830" y="433" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-37" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/power_platform/PowerBI.svg;" vertex="1" parent="1">
+          <mxGeometry x="1073.5" y="516" width="51" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-38" value="Power BI&amp;nbsp;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1065" y="584" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-40" value="" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.notification_hub;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="450" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-41" value="Azure Monitor" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="460.00000000000006" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-42" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.225;exitY=0.911;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="bIh_L40pBOAvcIcf7J4U-25" target="bIh_L40pBOAvcIcf7J4U-40">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="830" y="480" as="sourcePoint" />
+            <mxPoint x="880" y="430" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="800" y="475" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-43" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://cdn0.iconfinder.com/data/icons/analytic-investment-and-balanced-scorecard/512/9Man_user_Student_Teacher_Avatar-128.png" vertex="1" parent="1">
+          <mxGeometry x="232" y="460" width="68" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="bIh_L40pBOAvcIcf7J4U-44" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="bIh_L40pBOAvcIcf7J4U-40" target="bIh_L40pBOAvcIcf7J4U-43">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="380" as="sourcePoint" />
+            <mxPoint x="370" y="330" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
