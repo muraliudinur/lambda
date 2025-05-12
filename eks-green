@@ -1,0 +1,71 @@
+Step-by-Step Terraform Solution Using aws_security_group
+🔹 1. Variables
+hcl
+Copy
+Edit
+variable "has_green_cluster" {
+  type    = bool
+  default = false
+}
+🔹 2. Security Group Data Sources
+hcl
+Copy
+Edit
+# Blue EKS SG (always exists)
+data "aws_security_group" "blue_eks" {
+  filter {
+    name   = "tag:Name"
+    values = ["blue-eks-sg"]
+  }
+}
+
+# Green EKS SG (only in prod, for example)
+data "aws_security_group" "green_eks" {
+  count = var.has_green_cluster ? 1 : 0
+  filter {
+    name   = "tag:Name"
+    values = ["green-eks-sg"]
+  }
+}
+🔹 3. Build List of Ingress Rules
+hcl
+Copy
+Edit
+locals {
+  eks_sg_ids = compact([
+    data.aws_security_group.blue_eks.id,
+    var.has_green_cluster ? try(data.aws_security_group.green_eks[0].id, null) : null
+  ])
+}
+🔹 4. Create RDS Security Group with Dynamic Ingress Rules
+hcl
+Copy
+Edit
+resource "aws_security_group" "rds" {
+  name        = "rds-sg"
+  description = "RDS SG allowing access from EKS clusters"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description              = "Access from blue EKS SG"
+    from_port                = 5432
+    to_port                  = 5432
+    protocol                 = "tcp"
+    security_groups          = [data.aws_security_group.blue_eks.id]
+  }
+
+  dynamic "ingress" {
+    for_each = var.has_green_cluster ? [data.aws_security_group.green_eks[0].id] : []
+    content {
+      description              = "Access from green EKS SG"
+      from_port                = 5432
+      to_port                  = 5432
+      protocol                 = "tcp"
+      security_groups          = [ingress.value]
+    }
+  }
+
+  tags = {
+    Name = "rds-sg"
+  }
+}
